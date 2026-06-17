@@ -1,7 +1,8 @@
 # -----------------------------
 # CUDA (for compiling CUDA ops)
 # -----------------------------
-export CUDA_HOME=/work/yang_miao/cuda-12  # TODO: set this to your cuda home
+export CUDA_HOME=/curc/sw/cuda/12.1.1
+export CUDA_PATH=$CUDA_HOME
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 export CPLUS_INCLUDE_PATH=$CUDA_HOME/include:$CPLUS_INCLUDE_PATH
@@ -9,7 +10,7 @@ export CPLUS_INCLUDE_PATH=$CUDA_HOME/include:$CPLUS_INCLUDE_PATH
 # -----------------------------
 # Project
 # -----------------------------
-cd LangHOPS
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # -----------------------------
 # Conda env
