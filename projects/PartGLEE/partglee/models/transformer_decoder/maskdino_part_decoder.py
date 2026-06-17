@@ -154,6 +154,8 @@ class MaskDINOPartDecoder(nn.Module):
             'partimagenet_joint_part': 40,
             'partimagenet_renamed_joint': 51,
             'partimagenet_renamed_joint_part': 40,
+            'diagram_joint': 571,
+            'diagram_joint_part': 560,
             'partimagenet_semseg': 187, 
             'partimagenet_semseg_part': 147, 
             'partimagenet_parsed_part': 40,
@@ -201,6 +203,7 @@ class MaskDINOPartDecoder(nn.Module):
             'pascalvoc_base_part': [idx + 15 for idx in range(74)],
             'partimagenet_joint_part': [idx + 11 for idx in range(40)],
             'partimagenet_renamed_joint_part': [idx + 11 for idx in range(40)],
+            'diagram_joint_part': [idx + 11 for idx in range(560)],
             'partimagenet_semseg_part': [idx + 40 for idx in range(147)],
             'partimagenet_parsed_part': [idx + 11 for idx in range(40)],
             'partimagenet_val_part': [idx + 11 for idx in range(40)],
@@ -246,6 +249,8 @@ class MaskDINOPartDecoder(nn.Module):
         self.partimagenet_joint_part_label_enc = nn.Embedding(40, hidden_dim)
         self.partimagenet_renamed_joint_label_enc = nn.Embedding(51, hidden_dim)
         self.partimagenet_renamed_joint_part_label_enc = nn.Embedding(40, hidden_dim)
+        self.diagram_joint_label_enc = nn.Embedding(571, hidden_dim)
+        self.diagram_joint_part_label_enc = nn.Embedding(560, hidden_dim)
         self.partimagenet_semseg_label_enc = nn.Embedding(187, hidden_dim)
         self.partimagenet_semseg_part_label_enc = nn.Embedding(147, hidden_dim)
         self.sa1b_joint_label_enc = nn.Embedding(2, hidden_dim)
@@ -282,6 +287,8 @@ class MaskDINOPartDecoder(nn.Module):
             'partimagenet_joint_part': self.partimagenet_joint_part_label_enc,
             'partimagenet_renamed_joint': self.partimagenet_joint_label_enc,
             'partimagenet_renamed_joint_part': self.partimagenet_joint_part_label_enc,
+            'diagram_joint': self.diagram_joint_label_enc,
+            'diagram_joint_part': self.diagram_joint_part_label_enc,
             'partimagenet_semseg': self.partimagenet_semseg_label_enc ,
             "partimagenet_semseg_part": self.partimagenet_semseg_part_label_enc,
             'partimagenet_parsed_part': self.partimagenet_joint_part_label_enc,

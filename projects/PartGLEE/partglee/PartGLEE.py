@@ -89,6 +89,15 @@ class PartGLEE(nn.Module):
         coco_class_name = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
         openimages_object_indices = [cat['id'] for cat in OPENIMAGES_OBJECT_CATEGORIES]
         openimages_part_indices = [cat['id'] for cat in OPENIMAGES_PART_CATEGORIES]
+
+        def metadata_classes(dataset_name, fallback_count):
+            try:
+                metadata = MetadataCatalog.get(dataset_name)
+                if hasattr(metadata, "thing_classes") and metadata.thing_classes:
+                    return list(metadata.thing_classes)
+            except Exception:
+                pass
+            return [f"{dataset_name}_class_{idx}" for idx in range(fallback_count)]
         
         self.LVIS_class_names = [cat['name'] for cat in LVIS_CATEGORIES]
         self.paco_class_names = [cat['name'] for cat in PACO_CATEGORIES]
@@ -100,6 +109,7 @@ class PartGLEE(nn.Module):
         self.pascal_joint_class_names = [cat['name'] for cat in PASCAL_JOINT_CATEGORIES]
         self.partimagenet_joint_class_names = [cat['name'] for cat in PARTIMAGENET_JOINT_CATEGORIES]
         self.partimagenet_renamed_joint_class_names = [cat['name'] for cat in PARTIMAGENET_JOINT_RENAME_CATEGORIES]
+        self.diagram_joint_class_names = metadata_classes("diagram_joint_train", 571)
         self.partimagenet_semseg_class_names = PARTIMAGENET_SEMSEG_OBJECT_CATEGORIES + PARTIMAGENET_SEMSEG_PART_CATEGORIES
         self.pascal_open_vocabulary_base_class_names = [cat['name'] for cat in PASCAL_OPEN_VOCABULARY_JOINT_BASE_CATEGORIES]
         self.pascal_open_vocabulary_val_class_names = [cat['name'] for cat in PASCAL_OPEN_VOCABULARY_JOINT_VAL_CATEGORIES]
@@ -130,6 +140,7 @@ class PartGLEE(nn.Module):
             'pascal_joint': self.pascal_joint_class_names,
             'partimagenet_joint': self.partimagenet_joint_class_names,
             'partimagenet_renamed_joint': self.partimagenet_renamed_joint_class_names,
+            'diagram_joint': self.diagram_joint_class_names,
             'partimagenet_parsed': self.partimagenet_joint_class_names,
             'partimagenet_val': self.partimagenet_joint_class_names,
             'partimagenet_semseg': self.partimagenet_semseg_class_names,
@@ -533,7 +544,7 @@ class PartGLEE(nn.Module):
                 else:
                     gt_instances = [(x["instances"].to(self.device), x["obj_part_instances"].to(self.device)) for x in batched_inputs]
             
-            if task in ['sa1b_joint', 'paco', 'ade20k', 'ade20k_base', 'pascalvoc', 'pascalvoc_base', 'pascal_joint', 'partimagenet_joint', 'partimagenet_renamed_joint', 'pascal_open_vocabulary', 'openimage_joint', 'partimagenet_parsed', 'pascal_part_parsed', 'partimagenet_semseg'] and self.unify_object_part:
+            if task in ['sa1b_joint', 'paco', 'ade20k', 'ade20k_base', 'pascalvoc', 'pascalvoc_base', 'pascal_joint', 'partimagenet_joint', 'partimagenet_renamed_joint', 'diagram_joint', 'pascal_open_vocabulary', 'openimage_joint', 'partimagenet_parsed', 'pascal_part_parsed', 'partimagenet_semseg'] and self.unify_object_part:
                 object_targets, part_targets = self.prepare_targets_object_part(batched_inputs, gt_instances, images, task, is_sem_seg)
             else:
                 targets, prompt_list = self.prepare_targets(batched_inputs, gt_instances, images, prompt_list, task)
@@ -900,7 +911,7 @@ class PartGLEE(nn.Module):
         if not is_sem_seg: 
         
             for targets_per_image in targets:
-                if task in ['openimage_joint', 'partimagenet_parsed', 'pascal_part_parsed',] and 'gt_masks' not in targets_per_image._fields.keys():
+                if task in ['openimage_joint', 'diagram_joint', 'partimagenet_parsed', 'pascal_part_parsed',] and 'gt_masks' not in targets_per_image._fields.keys():
                     padded_masks = None
                 else:
                     if isinstance(targets_per_image.gt_masks, torch.Tensor):
@@ -912,7 +923,7 @@ class PartGLEE(nn.Module):
                     padded_masks[:, : gt_masks.shape[1], : gt_masks.shape[2]] = gt_masks
 
                 # Divide Object and Part indices
-                if task in ['sa1b_joint', 'paco', 'ade20k', 'ade20k_base', 'pascalvoc', 'pascalvoc_base', 'pascal_joint', 'partimagenet_joint', 'partimagenet_renamed_joint', 'partimagenet_semseg' , 'pascal_open_vocabulary', 'coco_panoptic', 'openimage_joint',] and self.unify_object_part:
+                if task in ['sa1b_joint', 'paco', 'ade20k', 'ade20k_base', 'pascalvoc', 'pascalvoc_base', 'pascal_joint', 'partimagenet_joint', 'partimagenet_renamed_joint', 'diagram_joint', 'partimagenet_semseg' , 'pascal_open_vocabulary', 'coco_panoptic', 'openimage_joint',] and self.unify_object_part:
                     object_level_task = task + '_object'
                     part_level_task = task + '_part'
                     object_category_indices = torch.tensor(self.object_category_index_mapper[object_level_task]).to(targets_per_image.gt_classes.device)

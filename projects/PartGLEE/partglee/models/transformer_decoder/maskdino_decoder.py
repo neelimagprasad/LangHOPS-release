@@ -155,6 +155,7 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_renamed_joint': 51,
             'partimagenet_joint_object': 11,
             'partimagenet_renamed_joint_object': 11,
+            'diagram_joint_object': 11,
             'partimagenet_semseg_object': 40, 
             'partimagenet_parsed_object': 11,
             'pascal_open_vocabulary_object': 12,
@@ -201,6 +202,7 @@ class MaskDINODecoder(nn.Module):
             'pascalvoc_base_object': [idx for idx in range(15)],
             'partimagenet_joint_object': [idx for idx in range(11)],
             'partimagenet_renamed_joint_object': [idx for idx in range(11)],
+            'diagram_joint_object': [idx for idx in range(11)],
             'partimagenet_semseg_object': [idx for idx in range(40)],
             'partimagenet_parsed_object': [idx for idx in range(11)],
             'partimagenet_val_object': [idx for idx in range(11)],
@@ -235,6 +237,7 @@ class MaskDINODecoder(nn.Module):
         self.pascalvoc_base_object_label_enc = nn.Embedding(15, hidden_dim)
         self.partimagenet_joint_label_enc = nn.Embedding(51, hidden_dim)
         self.partimagenet_joint_object_label_enc = nn.Embedding(11, hidden_dim)
+        self.diagram_joint_object_label_enc = nn.Embedding(11, hidden_dim)
         self.partimagenet_semseg_label_enc = nn.Embedding(187, hidden_dim)
         self.partimagenet_semseg_obj_label_enc = nn.Embedding(40, hidden_dim)
         self.sa1b_joint_label_enc = nn.Embedding(2, hidden_dim)
@@ -269,6 +272,7 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_joint_object': self.partimagenet_joint_object_label_enc,
             'partimagenet_renamed_joint': self.partimagenet_joint_label_enc,
             'partimagenet_renamed_joint_object': self.partimagenet_joint_object_label_enc,
+            'diagram_joint_object': self.diagram_joint_object_label_enc,
             'partimagenet_semseg': self.partimagenet_semseg_label_enc,
             "partimagenet_semseg_object": self.partimagenet_semseg_obj_label_enc,
             'partimagenet_parsed_object': self.partimagenet_joint_object_label_enc,

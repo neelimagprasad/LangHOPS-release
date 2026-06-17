@@ -13,6 +13,7 @@ DATASET_SPECIFIC_CATEGORIES = {
             'pascalvco_base': 89,
             'partimagenet_joint': 51,
             'partimagenet_renamed_joint': 51,
+            'diagram_joint': 571,
             'partimagenet_semseg': 187, 
             'sa1b_joint': 2,
             'pascal_joint': 113,
@@ -74,7 +75,7 @@ CRITERION_NUM_CLASSES = {'coco':80, 'coconomask':80, 'coco_clip':80, 'obj365':10
                     'burst':1,'bdd_det':10, 'bdd_inst':8,'bdd_track_seg':8, 'bdd_track_box':8, 'paco': 531, 'partimagenet': 40, \
                     'coco_panoptic': 133, 'paco_object': 75, 'paco_part': 456, 'ade20k_object': 44, 'ade20k_part': 234, \
                     'pascalvoc_object': 20, 'pascalvoc_part': 116, 'sa1b_joint_object': 1, 'sa1b_joint_part': 1, \
-                    'pascal_joint_object': 20, 'pascal_joint_part': 93, 'partimagenet_joint_object': 11, 'partimagenet_joint_part': 40, 'partimagenet_semseg_object': 40, 'partimagenet_semseg_part': 147, \
+                    'pascal_joint_object': 20, 'pascal_joint_part': 93, 'partimagenet_joint_object': 11, 'partimagenet_joint_part': 40, 'diagram_joint_object': 11, 'diagram_joint_part': 560, 'partimagenet_semseg_object': 40, 'partimagenet_semseg_part': 147, \
                     'pascal_open_vocabulary_object': 12, 'pascal_open_vocabulary_part': 77, 'coco_panoptic_object': 80, 'coco_panoptic_part': 53, \
                     'vg_joint_object': 200, 'vg_joint_part': 200, 'voc': 20, 'openimage_joint_object': 588, 'openimage_joint_part': 13, \
                     'ade20k_base_object': 33, 'ade20k_base_part': 176, 'pascalvoc_base_object': 15, 'pascalvoc_base_part': 74, \
@@ -93,6 +94,7 @@ TEST_TOPK_PER_IMAGE = {
             'ade20k': 100,
             'pascalvoc': 120,
             'partimagenet_joint': 100,
+            'diagram_joint': 100,
             'partimagenet_val': 100,
             'partimagenet_renamed_joint': 100,
             'partimagenet_semseg': 100,
@@ -110,6 +112,7 @@ DATASET_SPECIFIC_OBJECT_NUMS = {
             'ade20k': 20,
             'pascalvoc': 20,
             'partimagenet_joint': 5,
+            'diagram_joint': 5,
             'partimagenet_renamed_joint': 5,
             'partimagenet_semseg': 5,
             'sa1b_joint': 1,    # vis
@@ -129,6 +132,7 @@ DATASET_SPECIFIC_PART_NUMS = {
             'ade20k': 100,
             'pascalvoc': 100,
             'partimagenet_joint': 95,
+            'diagram_joint': 95,
             'partimagenet_renamed_joint': 95,
             'partimagenet_semseg': 95,
             'sa1b_joint': 10,   # vis
@@ -152,6 +156,7 @@ PART_DATASETS_OBJECT_CATEGORY_INDEX = {
             'pascalvoc_base_object': [idx for idx in range(len(PASCALVOC_OBJECT_BASE_CLASS_NAMES))],
             'partimagenet_joint_object': [idx for idx in range(len(PARTIMAGENET_OBJECT_CATEGORIES))],
             'partimagenet_renamed_joint_object': [idx for idx in range(len(PARTIMAGENET_OBJECT_CATEGORIES))],
+            'diagram_joint_object': [idx for idx in range(11)],
             'partimagenet_semseg_object': [idx for idx in range(len(PARTIMAGENET_SEMSEG_OBJECT_CATEGORIES))],
             'sa1b_joint_object': [0],
             'pascal_joint_object': [idx for idx in range(len(PASCAL_OBJECT_CATEGORIES))],
@@ -170,6 +175,7 @@ PART_DATASETS_PART_CATEGORY_INDEX = {
             'pascalvoc_base_part': [idx + len(PASCALVOC_OBJECT_BASE_CLASS_NAMES) for idx in range(len(PASCALVOC_BASE_CLASS_NAMES))],
             'partimagenet_joint_part': [idx + 11 for idx in range(len(PARTIMAGENET_PART_CATEGORIES))],
             'partimagenet_renamed_joint_part': [idx + 11 for idx in range(len(PARTIMAGENET_PART_CATEGORIES))],
+            'diagram_joint_part': [idx + 11 for idx in range(560)],
             'partimagenet_semseg_part': [idx + len(PARTIMAGENET_SEMSEG_OBJECT_CATEGORIES) for idx in range(len(PARTIMAGENET_SEMSEG_PART_CATEGORIES))],
             'sa1b_joint_part': [1],
             'pascal_joint_part': [idx + 20 for idx in range(len(PASCAL_PART_CATEGORIES))],
@@ -193,6 +199,7 @@ DATASET_CATEGORY_SET = {
             'pascal_joint': set(list(range(113))),
             'partimagenet_joint': set(list(range(51))),
             'partimagenet_renamed_joint': set(list(range(51))),
+            'diagram_joint': set(list(range(571))),
             'pascal_open_vocabulary': set(list(range(89))),
             'pascal_open_vocabulary_val': set(list(range(107))),
             'coco_panoptic': set(list(range(133))),
