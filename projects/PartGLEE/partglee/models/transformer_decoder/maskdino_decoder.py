@@ -437,7 +437,6 @@ class MaskDINODecoder(nn.Module):
             # print("task: ", task)
             # print("self.label_enc[task]: ", self.label_enc[task].shape)
             # print("known_labels_expaned: ", known_labels_expaned)
-            print(" m")
             input_label_embed = self.label_enc[task](m)
             input_bbox_embed = inverse_sigmoid(known_bbox_expand)
             single_pad = int(max(known_num))

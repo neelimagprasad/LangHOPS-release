@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
 import logging
+import os
 
 import numpy as np
 import torch
@@ -112,8 +113,39 @@ class Joint_Image_LSJDatasetMapper:
         self.img_format = cfg.INPUT.FORMAT
         self.is_train = is_train
         self.lang_guide_det = True
+        self.debug_samples_remaining = int(os.getenv("LANGHOPS_DEBUG_DATASET_SAMPLES", "0"))
         
         self.ordinal_nums = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"]
+    
+    def _debug_dataset_sample(self, dataset_dict, image, instances=None, stage="loaded"):
+        if self.debug_samples_remaining <= 0:
+            return
+        annotations = dataset_dict.get("annotations", [])
+        categories = [anno.get("category_id") for anno in annotations[:10]]
+        message = (
+            "[JointImageMapperDebug] "
+            f"stage={stage} "
+            f"dataset={dataset_dict.get('dataset_name')} "
+            f"task={dataset_dict.get('task')} "
+            f"image_id={dataset_dict.get('image_id')} "
+            f"file_name={dataset_dict.get('file_name')} "
+            f"image_shape={getattr(image, 'shape', None)} "
+            f"num_annotations={len(annotations)} "
+            f"first_category_ids={categories}"
+        )
+        if instances is not None:
+            fields = instances.get_fields()
+            gt_classes = fields.get("gt_classes")
+            gt_boxes = fields.get("gt_boxes")
+            classes_preview = gt_classes[:10].tolist() if gt_classes is not None else []
+            boxes_preview = gt_boxes.tensor[:3].tolist() if gt_boxes is not None else []
+            message += (
+                f" mapped_instances={len(instances)}"
+                f" mapped_classes_preview={classes_preview}"
+                f" mapped_boxes_preview={boxes_preview}"
+            )
+        print(message, flush=True)
+        self.debug_samples_remaining -= 1
     
     def __call__(self, dataset_dict):
         """
@@ -126,6 +158,7 @@ class Joint_Image_LSJDatasetMapper:
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
         utils.check_image_size(dataset_dict, image)
+        self._debug_dataset_sample(dataset_dict, image, stage="loaded")
         
         if dataset_dict.get('task') == 'sa1b' or dataset_dict.get('task') == 'sa1b_joint': # read the sa1b mask annotation which saved with images rather in annotation json
             mask_anno_json = json.load(open(dataset_dict['file_name'].replace('NAS/junfengwu/datasets/SA1B_scaleup/images','part_datasets/sa1b_imagejsons')[:-3]+'json','rb'))
@@ -309,6 +342,7 @@ class Joint_Image_LSJDatasetMapper:
                 # This is different from the original Mask2Former
                 setattr(instances, "_image_size", image_shape_wop)
                 dataset_dict["instances"] = instances
+                self._debug_dataset_sample(dataset_dict, image, instances=instances, stage="mapped")
 
                 if dataset_dict.get('task') == 'vg' or dataset_dict.get('task') == 'vg_joint' or dataset_dict.get('task') =='grit': # filter empty description
                     dataset_dict["object_descriptions"] = []

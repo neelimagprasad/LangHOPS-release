@@ -1,0 +1,63 @@
+_BASE_: "../base_clip_frozen_image_r50.yaml"
+SEED: 42
+MODEL:
+  WEIGHTS: "projects/PartGLEE/checkpoint/PartGLEE_converted_from_GLEE_RN50.pth"
+  SEM_SEG_HEAD:
+    NAME: "MaskDINOHead"
+    IGNORE_VALUE: 255
+    NUM_CLASSES: 531
+  MaskDINO:
+    NUM_OBJECT_QUERIES: 300
+    NUM_PART_QUERIES: 10
+    UNIFY_OBJECT_PART: True
+    Q_FORMER: True
+    OBJECT_PART_DECODER_LAYERS: 6
+    CLASS_WEIGHT: 2.0
+    MASK_WEIGHT: 5.0
+    DICE_WEIGHT: 5.0
+    BOX_WEIGHT: 5.0
+    GIOU_WEIGHT: 2.0
+    NO_OBJECT_WEIGHT: 0.1
+  LLM:
+    USE_LLM: False
+    DEBUG: False
+    LLM_TYPE: "microsoft/phi-1.5"
+    LLM_PATH: ""
+    LLM_CONVERSATION_TYPE: "llava_phi"
+    HIDDEN_SIZE: 2048
+    IMG_PROJ_INDIMS: 256
+    LORA:
+      R: 8
+      ALPHA: 16
+      DROPOUT: 0.05
+      TARGET_MODULES: ["self_attn.q_proj", "self_attn.v_proj"]
+DATASETS:
+  TRAIN: ("partimagenet_joint_train",)
+  TEST: ("partimagenet_joint_val",)
+SOLVER:
+  OPTIMIZER: "ADAMW"
+  BASE_LR: 0.0001
+  WEIGHT_DECAY: 0.0001
+  BACKBONE_MULTIPLIER: 0.1
+  TEXTENCODER_MULTIPLIER: 1.0
+  IMS_PER_BATCH: 8
+  MAX_ITER: 12000
+  STEPS: (8000, 10000)
+  GAMMA: 0.1
+  WARMUP_ITERS: 1000
+  WARMUP_FACTOR: 0.001
+  CHECKPOINT_PERIOD: 1000
+  CLIP_GRADIENTS:
+    ENABLED: False
+INPUT:
+  IMAGE_SIZE: 512
+  MIN_SCALE: 0.1
+  MAX_SCALE: 2.0
+  FORMAT: "RGB"
+  DATASET_MAPPER_NAME: "joint_image_lsj"
+DATALOADER:
+  FILTER_EMPTY_ANNOTATIONS: True
+  NUM_WORKERS: 2
+TEST:
+  EVAL_PERIOD: 0
+OUTPUT_DIR: projects/PartGLEE/output/Training/PartImageNet-Baseline-RN50/

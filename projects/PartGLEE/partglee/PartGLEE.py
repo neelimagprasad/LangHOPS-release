@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import math
+import os
 from os import DirEntry
 import numpy as np
 import torch
@@ -521,9 +522,9 @@ class PartGLEE(nn.Module):
 
         batch_name_list = None
         
-        # print dataset name and task
-        dataset_names_batch = [binput['dataset_name'] for binput in batched_inputs]
-        print(f"Dataset names in batch[0]: {dataset_names_batch[0]}")
+        if int(os.getenv("LANGHOPS_DEBUG_DATASET_SAMPLES", "0")) > 0:
+            dataset_names_batch = [binput['dataset_name'] for binput in batched_inputs]
+            print(f"Dataset names in batch[0]: {dataset_names_batch[0]}", flush=True)
         if 'task' in batched_inputs[0]:
             task_name_batch = [binput['task'] for binput in batched_inputs]
             # print(f"Task names in batch: {task_name_batch}")
