@@ -865,7 +865,9 @@ class PartGLEE(nn.Module):
         for targets_per_image in targets:
             #h, w = targets_per_image.image_size   
             #image_size_xyxy = torch.as_tensor([w, h, w, h], dtype=torch.float, device=self.device)
-            if task in ['obj365','bdd_det', 'bdd_track_box','openimage','vg', 'vg_joint', 'grit', 'partimagenet_parsed', 'pascal_part_parsed',] and 'gt_masks' not in targets_per_image._fields.keys():
+            if task in ['obj365','bdd_det', 'bdd_track_box','openimage','vg', 'vg_joint', 'grit', 'partimagenet_parsed', 'pascal_part_parsed', 'part_classification',] and 'gt_masks' not in targets_per_image._fields.keys():
+                padded_masks = None
+            elif 'gt_masks' not in targets_per_image._fields.keys():
                 padded_masks = None
             else:
                 if isinstance(targets_per_image.gt_masks, torch.Tensor):
