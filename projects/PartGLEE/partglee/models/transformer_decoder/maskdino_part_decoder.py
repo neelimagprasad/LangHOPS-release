@@ -156,6 +156,7 @@ class MaskDINOPartDecoder(nn.Module):
             'partimagenet_renamed_joint_part': 40,
             'diagram_joint': 571,
             'diagram_joint_part': 560,
+            'part_classification_part': 560,
             'partimagenet_semseg': 187, 
             'partimagenet_semseg_part': 147, 
             'partimagenet_parsed_part': 40,
@@ -204,6 +205,7 @@ class MaskDINOPartDecoder(nn.Module):
             'partimagenet_joint_part': [idx + 11 for idx in range(40)],
             'partimagenet_renamed_joint_part': [idx + 11 for idx in range(40)],
             'diagram_joint_part': [idx + 11 for idx in range(560)],
+            'part_classification_part': [idx + 11 for idx in range(560)],
             'partimagenet_semseg_part': [idx + 40 for idx in range(147)],
             'partimagenet_parsed_part': [idx + 11 for idx in range(40)],
             'partimagenet_val_part': [idx + 11 for idx in range(40)],
@@ -251,6 +253,7 @@ class MaskDINOPartDecoder(nn.Module):
         self.partimagenet_renamed_joint_part_label_enc = nn.Embedding(40, hidden_dim)
         self.diagram_joint_label_enc = nn.Embedding(571, hidden_dim)
         self.diagram_joint_part_label_enc = nn.Embedding(560, hidden_dim)
+        self.part_classification_part_label_enc = nn.Embedding(560, hidden_dim)
         self.partimagenet_semseg_label_enc = nn.Embedding(187, hidden_dim)
         self.partimagenet_semseg_part_label_enc = nn.Embedding(147, hidden_dim)
         self.sa1b_joint_label_enc = nn.Embedding(2, hidden_dim)
@@ -289,6 +292,7 @@ class MaskDINOPartDecoder(nn.Module):
             'partimagenet_renamed_joint_part': self.partimagenet_joint_part_label_enc,
             'diagram_joint': self.diagram_joint_label_enc,
             'diagram_joint_part': self.diagram_joint_part_label_enc,
+            'part_classification_part': self.part_classification_part_label_enc,
             'partimagenet_semseg': self.partimagenet_semseg_label_enc ,
             "partimagenet_semseg_part": self.partimagenet_semseg_part_label_enc,
             'partimagenet_parsed_part': self.partimagenet_joint_part_label_enc,
@@ -707,7 +711,9 @@ class MaskDINOPartDecoder(nn.Module):
                 else:
                     class_embed = output_memory @ self.category_embed  # [bz,num_q,projectdim]
                     if self.unify_object_part and task not in self.object_level_datasets:
-                        if 'custom' in task:
+                        if custom_part_categories_idx is not None:
+                            part_category_idx = custom_part_categories_idx
+                        elif 'custom' in task:
                             assert custom_part_categories_idx != None, "Customized Task must input part categories indices!"
                             part_category_idx = custom_part_categories_idx
                         else:
@@ -865,7 +871,9 @@ class MaskDINOPartDecoder(nn.Module):
             outputs_class = torch.einsum("bqc,bc->bq", class_embed, extra['grounding_class']).unsqueeze(-1) #[bz,numq,1]
         else:
             if self.unify_object_part and task not in self.object_level_datasets:
-                if 'custom' in task:
+                if custom_part_categories_idx is not None:
+                    part_category_idx = custom_part_categories_idx
+                elif 'custom' in task:
                     assert custom_part_categories_idx != None, "Customized Task must input part categories indices!"
                     part_category_idx = custom_part_categories_idx
                 else:

@@ -157,6 +157,8 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_renamed_joint_object': 11,
             'diagram_joint_object': 11,
             'part_classification': 560,
+            'part_classification_object': 11,
+            'part_classification_part': 560,
             'partimagenet_semseg_object': 40, 
             'partimagenet_parsed_object': 11,
             'pascal_open_vocabulary_object': 12,
@@ -204,6 +206,7 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_joint_object': [idx for idx in range(11)],
             'partimagenet_renamed_joint_object': [idx for idx in range(11)],
             'diagram_joint_object': [idx for idx in range(11)],
+            'part_classification_object': [idx for idx in range(11)],
             'partimagenet_semseg_object': [idx for idx in range(40)],
             'partimagenet_parsed_object': [idx for idx in range(11)],
             'partimagenet_val_object': [idx for idx in range(11)],
@@ -240,6 +243,8 @@ class MaskDINODecoder(nn.Module):
         self.partimagenet_joint_object_label_enc = nn.Embedding(11, hidden_dim)
         self.diagram_joint_object_label_enc = nn.Embedding(11, hidden_dim)
         self.part_classification_label_enc = nn.Embedding(560, hidden_dim)
+        self.part_classification_object_label_enc = nn.Embedding(11, hidden_dim)
+        self.part_classification_part_label_enc = nn.Embedding(560, hidden_dim)
         self.partimagenet_semseg_label_enc = nn.Embedding(187, hidden_dim)
         self.partimagenet_semseg_obj_label_enc = nn.Embedding(40, hidden_dim)
         self.sa1b_joint_label_enc = nn.Embedding(2, hidden_dim)
@@ -276,6 +281,8 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_renamed_joint_object': self.partimagenet_joint_object_label_enc,
             'diagram_joint_object': self.diagram_joint_object_label_enc,
             'part_classification': self.part_classification_label_enc,
+            'part_classification_object': self.part_classification_object_label_enc,
+            'part_classification_part': self.part_classification_part_label_enc,
             'partimagenet_semseg': self.partimagenet_semseg_label_enc,
             "partimagenet_semseg_object": self.partimagenet_semseg_obj_label_enc,
             'partimagenet_parsed_object': self.partimagenet_joint_object_label_enc,
@@ -612,7 +619,9 @@ class MaskDINODecoder(nn.Module):
             else:
                 class_embed = output_memory @ self.category_embed  # [bz,num_q,projectdim]
                 if self.unify_object_part and task not in self.object_level_datasets:
-                    if 'custom' in task:
+                    if custom_object_categories_idx is not None:
+                        object_category_idx = custom_object_categories_idx
+                    elif 'custom' in task:
                         assert custom_object_categories_idx != None, "Customized Task must input object categories indices!"
                         object_category_idx = custom_object_categories_idx
                     else:
@@ -770,7 +779,9 @@ class MaskDINODecoder(nn.Module):
             outputs_class =  torch.einsum("bqc,bc->bq", class_embed, extra['grounding_class']).unsqueeze(-1) #[bz,numq,1]
         else:
             if self.unify_object_part and task not in self.object_level_datasets:
-                if 'custom' in task:
+                if custom_object_categories_idx is not None:
+                    object_category_idx = custom_object_categories_idx
+                elif 'custom' in task:
                     assert custom_object_categories_idx != None, "Customized Task must input object categories indices!"
                     object_category_idx = custom_object_categories_idx
                 else:

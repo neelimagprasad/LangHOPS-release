@@ -547,8 +547,12 @@ class PartGLEE(nn.Module):
                 else:
                     gt_instances = [(x["instances"].to(self.device), x["obj_part_instances"].to(self.device)) for x in batched_inputs]
             
+            custom_object_categories_idx = None
+            custom_part_categories_idx = None
             if task in ['sa1b_joint', 'paco', 'ade20k', 'ade20k_base', 'pascalvoc', 'pascalvoc_base', 'pascal_joint', 'partimagenet_joint', 'partimagenet_renamed_joint', 'diagram_joint', 'pascal_open_vocabulary', 'openimage_joint', 'partimagenet_parsed', 'pascal_part_parsed', 'partimagenet_semseg'] and self.unify_object_part:
                 object_targets, part_targets = self.prepare_targets_object_part(batched_inputs, gt_instances, images, task, is_sem_seg)
+            elif task == 'part_classification' and self.unify_object_part:
+                object_targets, part_targets = self.prepare_targets_object_part_custom(batched_inputs, gt_instances, images, task)
             else:
                 targets, prompt_list = self.prepare_targets(batched_inputs, gt_instances, images, prompt_list, task)
             
@@ -558,6 +562,15 @@ class PartGLEE(nn.Module):
                 batch_name_list, targets = self.vg_category_name(targets, task, batched_inputs)
             elif task in ['vg_joint']:
                 batch_name_list, object_targets, part_targets = self.vg_joint_category_name_sampling(targets, task, batched_inputs)
+            elif task == 'part_classification' and self.unify_object_part:
+                result = self.part_classification_joint_category_name_sampling(
+                    object_targets, part_targets, batched_inputs
+                )
+                if result is None:
+                    return {k: torch.tensor(0.0, device=self.device) for k in self.criterion.weight_dict}
+                batch_name_list, object_targets, part_targets, num_object_categories = result
+                custom_object_categories_idx = list(range(num_object_categories))
+                custom_part_categories_idx = list(range(num_object_categories, len(batch_name_list)))
             else:
                 batch_name_list = self.dataset_name_dicts[task]
             # batch_name_list = ["Dinosaur", "Dinosaur:head"]
@@ -571,9 +584,14 @@ class PartGLEE(nn.Module):
                 # if dist_loss is not None:
                 losses.update({"dist_loss":dist_loss})
             else:
-                if self.unify_object_part and task not in self.object_level_datasets:
+                if self.unify_object_part and (task not in self.object_level_datasets or task == 'part_classification'):
                     targets = (object_targets, part_targets)
-                    losses = self.partglee(images, prompt_list, task, targets, batch_name_list, is_train=True, criterion=self.criterion, images_vlm = images_vlm)
+                    losses = self.partglee(
+                        images, prompt_list, task, targets, batch_name_list, is_train=True, criterion=self.criterion,
+                        custom_object_categories_idx=custom_object_categories_idx,
+                        custom_part_categories_idx=custom_part_categories_idx,
+                        images_vlm=images_vlm,
+                    )
                 else:
                     losses = self.partglee(images, prompt_list, task, targets, batch_name_list, is_train=True, criterion=self.criterion, images_vlm = images_vlm)
             
@@ -907,6 +925,132 @@ class PartGLEE(nn.Module):
             if prompt_flag:
                 prompt_list["spatial"].append(padded_masks)
         return new_targets, prompt_list
+
+    def part_classification_joint_category_name_sampling(self, object_targets, part_targets, batched_inputs):
+        """Build sampled object/part vocabularies for Exp2 part classification."""
+        all_pos_object_categories = []
+        all_pos_part_categories = []
+        object_descriptions = []
+        part_descriptions = []
+
+        for obj_tgt, part_tgt, batched_input in zip(object_targets, part_targets, batched_inputs):
+            super_category = batched_input.get("super_category")
+            part_label = batched_input.get("part_label")
+            if super_category is not None and part_label is not None:
+                object_description = [super_category]
+                part_description = [part_label]
+            else:
+                object_description = []
+                part_description = []
+
+            object_descriptions.append(object_description)
+            part_descriptions.append(part_description)
+            all_pos_object_categories.extend(object_description)
+            all_pos_part_categories.extend(part_description)
+
+        object_vocab = [cat["name"] for cat in PARTIMAGENET_OBJECT_CATEGORIES]
+        part_vocab = self.dataset_name_dicts.get("part_classification", [])
+        if not part_vocab:
+            return None
+
+        all_pos_object_set = set(all_pos_object_categories)
+        all_pos_part_set = set(all_pos_part_categories)
+        rest_object_cate = set(object_vocab) - all_pos_object_set
+        rest_part_cate = set(part_vocab) - all_pos_part_set
+        object_label_category = list(all_pos_object_set)
+        part_label_category = list(all_pos_part_set)
+
+        actual_obj_count = len(object_label_category)
+        max_obj_len = min(actual_obj_count + 2, len(object_vocab))
+        max_part_len = self.max_category_len - max_obj_len
+        if max_part_len < len(part_label_category):
+            max_obj_len = max(actual_obj_count, 1)
+            max_part_len = self.max_category_len - max_obj_len
+
+        if max_obj_len < len(object_label_category) or max_part_len < len(part_label_category):
+            return None
+
+        num_obj_neg_samples = min(max_obj_len - len(object_label_category), len(rest_object_cate))
+        sample_obj_cate = random.sample(list(rest_object_cate), num_obj_neg_samples) if num_obj_neg_samples > 0 else []
+        object_batch_name_list = object_label_category + sample_obj_cate
+        random.shuffle(object_batch_name_list)
+
+        num_part_neg_samples = min(max_part_len - len(part_label_category), len(rest_part_cate))
+        sample_part_cate = random.sample(list(rest_part_cate), num_part_neg_samples) if num_part_neg_samples > 0 else []
+        part_batch_name_list = part_label_category + sample_part_cate
+        random.shuffle(part_batch_name_list)
+
+        for obj_tgt, part_tgt, obj_desc, part_desc in zip(object_targets, part_targets, object_descriptions, part_descriptions):
+            if len(obj_tgt["labels"]) > 0 and len(obj_desc) > 0:
+                obj_gt_new_ids = [object_batch_name_list.index(obj_desc[0])] * len(obj_tgt["labels"])
+                obj_tgt["labels"] = torch.tensor(obj_gt_new_ids, dtype=torch.int64, device=obj_tgt["labels"].device)
+            if len(part_tgt["labels"]) > 0 and len(part_desc) > 0:
+                part_gt_new_ids = [part_batch_name_list.index(part_desc[0])] * len(part_tgt["labels"])
+                part_tgt["labels"] = torch.tensor(part_gt_new_ids, dtype=torch.int64, device=part_tgt["labels"].device)
+
+        batch_name_list = object_batch_name_list + part_batch_name_list
+        return batch_name_list, object_targets, part_targets, len(object_batch_name_list)
+
+    def prepare_targets_object_part_custom(self, batched_inputs, targets, images, task):
+        h_pad, w_pad = images.tensor.shape[-2:]
+        object_targets = []
+        part_targets = []
+
+        for targets_per_image, batched_input in zip(targets, batched_inputs):
+            has_gt_masks = "gt_masks" in targets_per_image._fields.keys() and targets_per_image.has("gt_masks")
+            if has_gt_masks:
+                if isinstance(targets_per_image.gt_masks, torch.Tensor):
+                    gt_masks = targets_per_image.gt_masks
+                else:
+                    gt_masks = targets_per_image.gt_masks.tensor
+                padded_masks = torch.zeros((gt_masks.shape[0], h_pad, w_pad), dtype=gt_masks.dtype, device=gt_masks.device)
+                padded_masks[:, : gt_masks.shape[1], : gt_masks.shape[2]] = gt_masks
+            else:
+                padded_masks = None
+
+            gt_classes = targets_per_image.gt_classes
+            image_size_xyxy = torch.as_tensor([w_pad, h_pad, w_pad, h_pad], dtype=torch.float, device=self.device)
+            gt_boxes = box_ops.box_xyxy_to_cxcywh(targets_per_image.gt_boxes.tensor) / image_size_xyxy
+            gt_boxes = torch.clamp(gt_boxes, 0, 1)
+
+            if task == "part_classification":
+                part_classes = gt_classes.clone()
+                super_category_id = batched_input.get("super_category_id")
+                if super_category_id is not None:
+                    object_classes = torch.tensor([int(super_category_id)], dtype=torch.int64, device=gt_boxes.device)
+                else:
+                    object_classes = torch.empty(size=(0,), dtype=torch.int64, device=gt_boxes.device)
+            else:
+                object_category_mask = gt_classes < 11
+                part_category_mask = gt_classes >= 11
+                object_classes = gt_classes[object_category_mask]
+                part_classes = gt_classes[part_category_mask] - 11
+
+            if padded_masks is not None and object_classes.numel() > 0:
+                object_masks = padded_masks[: object_classes.shape[0]]
+                object_boxes = gt_boxes[: object_classes.shape[0]]
+            elif object_classes.numel() > 0:
+                object_masks = torch.zeros((object_classes.shape[0], h_pad, w_pad), dtype=torch.bool, device=gt_boxes.device)
+                object_boxes = torch.tensor([[0.5, 0.5, 1.0, 1.0]] * object_classes.shape[0], dtype=gt_boxes.dtype, device=gt_boxes.device)
+            else:
+                object_masks = torch.zeros((0, h_pad, w_pad), dtype=torch.bool, device=gt_boxes.device)
+                object_boxes = torch.empty(size=(0, 4), device=gt_boxes.device)
+
+            object_targets.append({"labels": object_classes, "masks": object_masks, "boxes": object_boxes})
+
+            if padded_masks is not None and part_classes.numel() > 0:
+                part_masks = padded_masks[: part_classes.shape[0]]
+                part_boxes = gt_boxes[: part_classes.shape[0]]
+            elif part_classes.numel() > 0:
+                part_masks = torch.zeros((part_classes.shape[0], h_pad, w_pad), dtype=torch.bool, device=gt_boxes.device)
+                part_boxes = torch.tensor([[0.5, 0.5, 1.0, 1.0]] * part_classes.shape[0], dtype=gt_boxes.dtype, device=gt_boxes.device)
+            else:
+                part_masks = torch.zeros((0, h_pad, w_pad), dtype=torch.bool, device=gt_boxes.device)
+                part_boxes = torch.empty(size=(0, 4), device=gt_boxes.device)
+
+            part_targets.append({"labels": part_classes, "masks": part_masks, "boxes": part_boxes})
+
+        return object_targets, part_targets
 
     def prepare_targets_object_part(self, batched_inputs, targets, images, task, is_sem_seg):
         h_pad, w_pad = images.tensor.shape[-2:]

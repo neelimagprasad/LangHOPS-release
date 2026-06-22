@@ -463,13 +463,14 @@ class PartGLEE_Model(nn.Module):
         if is_train and self.unify_object_part:
             part_losses = {}
             topk = self.topk_object_queries_num
-            if task not in self.object_level_datasets:
-                # decouple targets into object-level targets and part-level targets
+            if task not in self.object_level_datasets or task == 'part_classification':
                 object_targets, part_targets = targets
-                # For Datasets that have both object-level and part-level annotations, redefine task
-                object_level_task = task + '_object'
-                part_level_task = task + '_part'
-                # print("object_targets of task {}: {}".format(task, object_targets))
+                if task == 'part_classification':
+                    object_level_task = 'part_classification_object'
+                    part_level_task = 'part_classification_part'
+                else:
+                    object_level_task = task + '_object'
+                    part_level_task = task + '_part'
             else:
                 object_targets = targets
                 part_targets = [{"labels": torch.tensor([]).to(object_targets[i]['labels'].device), "boxes": torch.empty(size=(0,4), device=object_targets[i]['labels'].device), "masks": None} for i in range(len(object_targets))]
@@ -478,7 +479,13 @@ class PartGLEE_Model(nn.Module):
                 
             assert criterion is not None, 'The training phase must acquire criterion to perform matching and obtain the matched indices'
 
-            object_outputs, object_mask_dict, object_queries, src_flatten = self.object_predictor(multi_scale_features, mask_features, extra=extra, task=object_level_task, masks=None, targets=object_targets)
+            object_predictor_kwargs = {}
+            if object_level_task == 'part_classification_object' and custom_object_categories_idx is not None:
+                object_predictor_kwargs['custom_object_categories_idx'] = custom_object_categories_idx
+
+            object_outputs, object_mask_dict, object_queries, src_flatten = self.object_predictor(
+                multi_scale_features, mask_features, extra=extra, task=object_level_task, masks=None, targets=object_targets, **object_predictor_kwargs
+            )
             
             fake_object_track_loss = (object_outputs['pred_track_embed']*0).sum()
             # Perform matching in the object-level instances
@@ -517,12 +524,22 @@ class PartGLEE_Model(nn.Module):
                 
                 part_queries = part_queries.reshape(bs, topk*self.num_part_queries, hidden_dim).contiguous()
                 
+                part_predictor_kwargs = {
+                    'part_queries': part_queries,
+                    'topk': topk,
+                    'num_part_queries': topk*self.num_part_queries,
+                }
+                if part_level_task == 'part_classification_part' and custom_part_categories_idx is not None:
+                    part_predictor_kwargs['custom_part_categories_idx'] = custom_part_categories_idx
+
                 # Part-level Decoder
-                part_outputs, part_mask_dict = self.part_predictor(multi_scale_features, mask_features, extra=extra, task=part_level_task, masks=None, targets=part_targets, part_queries=part_queries, topk=topk, num_part_queries=topk*self.num_part_queries)
+                part_outputs, part_mask_dict = self.part_predictor(
+                    multi_scale_features, mask_features, extra=extra, task=part_level_task, masks=None, targets=part_targets, **part_predictor_kwargs
+                )
                 
                 # Perform matching in the part-level instances
                 fake_part_track_loss = (part_outputs['pred_track_embed']*0).sum()
-                if task in self.object_level_datasets:
+                if task in self.object_level_datasets and task != 'part_classification':
                     fake_task = task + '_fake'
                     part_losses, _ = criterion(part_outputs, part_targets, part_mask_dict, fake_task, object_outputs, topk_object_queries_indices)
                 else:

@@ -103,6 +103,11 @@ def _load_part_classification_dicts(json_file, labels_file, split):
             candidates = part_to_super.get(part_label, set())
             super_category = sorted(candidates)[0] if candidates else "unknown"
 
+        super_category_id = (
+            PARTIMAGENET_SUPER_CATEGORIES.index(super_category)
+            if super_category in PARTIMAGENET_SUPER_CATEGORIES
+            else None
+        )
         records.append(
             {
                 "file_name": file_name,
@@ -114,6 +119,7 @@ def _load_part_classification_dicts(json_file, labels_file, split):
                 "part_label": part_label,
                 "part_id": part_to_id[part_label],
                 "super_category": super_category,
+                "super_category_id": super_category_id,
             }
         )
 
