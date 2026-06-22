@@ -435,6 +435,10 @@ class MaskDINOPartDecoder(nn.Module):
             unmask_bbox = unmask_label = torch.cat(known)
             labels = torch.cat([t['labels'] for t in targets])
             boxes = torch.cat([t['boxes'] for t in targets])
+            if labels.numel() > 0:
+                num_dn_classes = int(labels.max().item()) + 1
+            else:
+                num_dn_classes = self.num_classes[task]
             batch_idx = torch.cat([torch.full_like(t['labels'].long(), i) for i, t in enumerate(targets)])
             # known
             known_indice = torch.nonzero(unmask_label + unmask_bbox)
@@ -452,7 +456,7 @@ class MaskDINOPartDecoder(nn.Module):
             if noise_scale > 0:
                 p = torch.rand_like(known_labels_expaned.float())
                 chosen_indice = torch.nonzero(p < (noise_scale * 0.5)).view(-1).long()  # half of bbox prob
-                new_label = torch.randint_like(chosen_indice, 0, self.num_classes[task])  # randomly put a new one here
+                new_label = torch.randint_like(chosen_indice, 0, num_dn_classes)  # randomly put a new one here
                 
                 if known_labels_expaned.dtype != new_label.dtype:
                     known_labels_expaned = known_labels_expaned.to(new_label.dtype)

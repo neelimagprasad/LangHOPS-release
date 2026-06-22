@@ -290,7 +290,8 @@ class SetCriterion(nn.Module):
             return losses
         
         target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
-        num_classes = self.num_classes[task]
+        # Use the live logits width (sampled batch vocab), not the full dataset class count.
+        num_classes = src_logits.shape[2]
         target_classes = torch.full(src_logits.shape[:2], num_classes,
                                     dtype=torch.int64, device=src_logits.device)
         target_classes[idx] = target_classes_o.to(torch.int64)
