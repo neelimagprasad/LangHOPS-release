@@ -1,0 +1,77 @@
+_BASE_: "../base_clip_frozen_image_r50.yaml"
+SEED: 42
+FIND_UNUSED_PARAMETERS: True
+MODEL:
+  WEIGHTS: "projects/PartGLEE/checkpoint/PartGLEE_converted_from_GLEE_RN50.pth"
+  SEM_SEG_HEAD:
+    NAME: "MaskDINOHead"
+    IGNORE_VALUE: 255
+    NUM_CLASSES: 560
+  TEXT:
+    ARCH: clip_frozen
+  LANGUAGE_BACKBONE:
+    LANG_DIM: 512
+  MaskDINO:
+    BOX_LOSS: False
+    UNIFY_OBJECT_PART: True
+    Q_FORMER: True
+    OBJECT_PART_DECODER_LAYERS: 6
+    NUM_PART_QUERIES: 10
+    NUM_OBJECT_QUERIES: 300
+    TOPK_OBJECT_QUERIES: 150
+    CLASS_WEIGHT: 5.0
+    MASK_WEIGHT: 0.0
+    DICE_WEIGHT: 0.0
+    BOX_WEIGHT: 0.0
+    GIOU_WEIGHT: 0.0
+    NO_OBJECT_WEIGHT: 0.1
+  LLM:
+    USE_LLM: False
+    DEBUG: False
+    LLM_TYPE: "microsoft/phi-1.5"
+    LLM_PATH: ""
+    LLM_CONVERSATION_TYPE: "llava_phi"
+    HIDDEN_SIZE: 2048
+    IMG_PROJ_INDIMS: 256
+    LORA:
+      R: 8
+      ALPHA: 16
+      DROPOUT: 0.05
+      TARGET_MODULES: ["self_attn.q_proj", "self_attn.v_proj"]
+DATASETS:
+  TRAIN: ("part_classification_train",)
+  TEST: ("part_classification_val",)
+DATALOADER:
+  SAMPLER_TRAIN: "TrainingSampler"
+  NUM_WORKERS: 4
+  FILTER_EMPTY_ANNOTATIONS: True
+INPUT:
+  IMAGE_SIZE: 256
+  MIN_SCALE: 0.1
+  MAX_SCALE: 2.0
+  MIN_SIZE_TRAIN: (256,)
+  MAX_SIZE_TRAIN: 384
+  MIN_SIZE_TEST: 256
+  MAX_SIZE_TEST: 384
+  AUGMENTATIONS: []
+  SIZE_DIVISIBILITY: 32
+  DATASET_MAPPER_NAME: "part_classification"
+  FORMAT: "RGB"
+SOLVER:
+  OPTIMIZER: "ADAMW"
+  BASE_LR: 0.0001
+  WEIGHT_DECAY: 0.0001
+  BACKBONE_MULTIPLIER: 0.1
+  TEXTENCODER_MULTIPLIER: 1.0
+  IMS_PER_BATCH: 8
+  MAX_ITER: 10000
+  STEPS: (6000, 8000)
+  GAMMA: 0.1
+  WARMUP_ITERS: 1000
+  WARMUP_FACTOR: 0.001
+  CHECKPOINT_PERIOD: 10000
+  CLIP_GRADIENTS:
+    ENABLED: False
+TEST:
+  EVAL_PERIOD: 0
+OUTPUT_DIR: projects/PartGLEE/output/Training/Diagram-Exp2-PartClassification-RN50/

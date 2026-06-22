@@ -27,7 +27,7 @@ from detectron2.projects.partglee.data import (
     get_detection_dataset_dicts, RefCOCODatasetMapper, DetrDatasetMapper, YTVISDatasetMapper, Joint_Image_LSJDatasetMapper, Joint_Image_allDatasetMapper, \
     COCOInstanceNewBaselineDatasetMapper, COCO_CLIP_DatasetMapper,UnivideoimageDatasetMapper, UnivideopseudoDatasetMapper, PACOEvaluator, \
     PascalPartNewBaselineDatasetMapper, PASCALPARTEvaluator, JointNewBaselineDatasetMapper, COCOPanopticNewBaselineDatasetMapper, SemanticObjPartDatasetMapper, \
-    InstanceSegEvaluator, SeginWDatasetMapper
+    InstanceSegEvaluator, SeginWDatasetMapper, PartClassificationDatasetMapper
 )
 from detectron2.projects.partglee.data.ade20k_evaluation import GeneralizedSemSegEvaluator
 from detectron2.projects.partglee.data.ade20k_evaluation.utils.post_process_utils import dense_crf_post_process
@@ -122,6 +122,8 @@ class Trainer(DefaultTrainer):
                     mapper = Joint_Image_LSJDatasetMapper(cfg, is_train=True)
                 elif cfg.INPUT.DATASET_MAPPER_NAME == "joint_image_all":
                     mapper = Joint_Image_allDatasetMapper(cfg, is_train=True)
+                elif cfg.INPUT.DATASET_MAPPER_NAME == "part_classification":
+                    mapper = PartClassificationDatasetMapper(cfg, is_train=True)
                     
                 else:
                     # mapper = RefCOCODatasetMapper(cfg, is_train=True)
@@ -157,6 +159,8 @@ class Trainer(DefaultTrainer):
                     mapper = JointNewBaselineDatasetMapper(cfg, is_train=True)
                 elif cfg.INPUT.DATASET_MAPPER_NAME == 'univideo_image_mapper':
                     mapper = UnivideoimageDatasetMapper(cfg, is_train=True)
+                elif cfg.INPUT.DATASET_MAPPER_NAME == 'part_classification':
+                    mapper = PartClassificationDatasetMapper(cfg, is_train=True)
                 else:
                     mapper = RefCOCODatasetMapper(cfg, is_train=True)
                 # if '365' in dataset_name or 'openimage' in dataset_name or 'vg' in dataset_name:
@@ -184,6 +188,8 @@ class Trainer(DefaultTrainer):
         # elif dataset_name.startswith('refcoco'):
             if cfg.INPUT.DATASET_MAPPER_NAME == 'coco_instance_lsj':
                 mapper = Joint_Image_LSJDatasetMapper(cfg, is_train=False)
+            elif cfg.INPUT.DATASET_MAPPER_NAME == 'part_classification':
+                mapper = PartClassificationDatasetMapper(cfg, is_train=False)
             elif cfg.MODEL.MaskDINO.TEST.OBJECT_PART_TEST_AUGMENTATIONS == True and cfg.MODEL.MaskDINO.TEST.ORACLE == True:
                 mapper = SemanticObjPartDatasetMapper(cfg, is_train=False)
             # elif cfg.MODEL.MaskDINO.TEST.OBJECT_PART_TEST_AUGMENTATIONS == True and cfg.MODEL.MaskDINO.TEST.ORACLE == False:

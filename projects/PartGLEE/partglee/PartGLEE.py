@@ -111,6 +111,7 @@ class PartGLEE(nn.Module):
         self.partimagenet_joint_class_names = [cat['name'] for cat in PARTIMAGENET_JOINT_CATEGORIES]
         self.partimagenet_renamed_joint_class_names = [cat['name'] for cat in PARTIMAGENET_JOINT_RENAME_CATEGORIES]
         self.diagram_joint_class_names = metadata_classes("diagram_joint_train", 571)
+        self.part_classification_class_names = metadata_classes("part_classification_train", 560)
         self.partimagenet_semseg_class_names = PARTIMAGENET_SEMSEG_OBJECT_CATEGORIES + PARTIMAGENET_SEMSEG_PART_CATEGORIES
         self.pascal_open_vocabulary_base_class_names = [cat['name'] for cat in PASCAL_OPEN_VOCABULARY_JOINT_BASE_CATEGORIES]
         self.pascal_open_vocabulary_val_class_names = [cat['name'] for cat in PASCAL_OPEN_VOCABULARY_JOINT_VAL_CATEGORIES]
@@ -142,6 +143,7 @@ class PartGLEE(nn.Module):
             'partimagenet_joint': self.partimagenet_joint_class_names,
             'partimagenet_renamed_joint': self.partimagenet_renamed_joint_class_names,
             'diagram_joint': self.diagram_joint_class_names,
+            'part_classification': self.part_classification_class_names,
             'partimagenet_parsed': self.partimagenet_joint_class_names,
             'partimagenet_val': self.partimagenet_joint_class_names,
             'partimagenet_semseg': self.partimagenet_semseg_class_names,

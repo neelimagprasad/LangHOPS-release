@@ -156,6 +156,7 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_joint_object': 11,
             'partimagenet_renamed_joint_object': 11,
             'diagram_joint_object': 11,
+            'part_classification': 560,
             'partimagenet_semseg_object': 40, 
             'partimagenet_parsed_object': 11,
             'pascal_open_vocabulary_object': 12,
@@ -238,6 +239,7 @@ class MaskDINODecoder(nn.Module):
         self.partimagenet_joint_label_enc = nn.Embedding(51, hidden_dim)
         self.partimagenet_joint_object_label_enc = nn.Embedding(11, hidden_dim)
         self.diagram_joint_object_label_enc = nn.Embedding(11, hidden_dim)
+        self.part_classification_label_enc = nn.Embedding(560, hidden_dim)
         self.partimagenet_semseg_label_enc = nn.Embedding(187, hidden_dim)
         self.partimagenet_semseg_obj_label_enc = nn.Embedding(40, hidden_dim)
         self.sa1b_joint_label_enc = nn.Embedding(2, hidden_dim)
@@ -273,6 +275,7 @@ class MaskDINODecoder(nn.Module):
             'partimagenet_renamed_joint': self.partimagenet_joint_label_enc,
             'partimagenet_renamed_joint_object': self.partimagenet_joint_object_label_enc,
             'diagram_joint_object': self.diagram_joint_object_label_enc,
+            'part_classification': self.part_classification_label_enc,
             'partimagenet_semseg': self.partimagenet_semseg_label_enc,
             "partimagenet_semseg_object": self.partimagenet_semseg_obj_label_enc,
             'partimagenet_parsed_object': self.partimagenet_joint_object_label_enc,
@@ -340,7 +343,7 @@ class MaskDINODecoder(nn.Module):
         self.src_cross_attn = src_cross_attn
         
         self.object_level_datasets = ['coco', 'coco_panoptic', 'lvis', 'obj365',   'openimage',  'vg', 'grounding',  'ytbvos', 'rvos', 'sa1b', 'ytvis19', 'image_yt19', 'ytvis21', 'image_yt21','ovis', 'image_o', 'uvo_video','bdd_det', 'bdd_inst','bdd_track_seg', 'bdd_track_box',
-        'voc', 'seginw_Cows', 'seginw_Elephants', 'seginw_Brain-Tumor', 'seginw_Chicken', 'seginw_Rail', 'seginw_Electric-Shaver', 'seginw_Fruits', 'seginw_Garbage', 'seginw_Ginger-Garlic', 'seginw_Hand', 'seginw_Hand-Metal', 'seginw_HouseHold-Items', 'seginw_Nutterfly-Squireel', \
+        'voc', 'part_classification', 'seginw_Cows', 'seginw_Elephants', 'seginw_Brain-Tumor', 'seginw_Chicken', 'seginw_Rail', 'seginw_Electric-Shaver', 'seginw_Fruits', 'seginw_Garbage', 'seginw_Ginger-Garlic', 'seginw_Hand', 'seginw_Hand-Metal', 'seginw_HouseHold-Items', 'seginw_Nutterfly-Squireel', \
         'seginw_Phones', 'seginw_Poles', 'seginw_Puppies', 'seginw_Salmon-Fillet', 'seginw_Strawberry', 'seginw_Tablets', 'seginw_Toolkits', 'seginw_Trash', 'seginw_Watermelon', 'odinw13_PascalVOC', ]
                  
     @classmethod

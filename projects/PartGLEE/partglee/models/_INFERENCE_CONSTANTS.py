@@ -14,6 +14,7 @@ DATASET_SPECIFIC_CATEGORIES = {
             'partimagenet_joint': 51,
             'partimagenet_renamed_joint': 51,
             'diagram_joint': 571,
+            'part_classification': 560,
             'partimagenet_semseg': 187, 
             'sa1b_joint': 2,
             'pascal_joint': 113,
@@ -72,7 +73,7 @@ DATASET_SPECIFIC_CATEGORIES = {
 CRITERION_NUM_CLASSES = {'coco':80, 'coconomask':80, 'coco_clip':80, 'obj365':100, 'obj365_clip':100, 'lvis':100, 'lvis_clip':100, \
                     'openimage':100, 'openimage_clip':100, 'grit':100, 'vg':200, 'grounding':1,  'ytbvos':1, 'rvos':1, 'sa1b':1, \
                     'sa1b_clip':1, 'ytvis19':40, 'image_yt19':40, 'ytvis21':40,'image_yt21':40,'ovis':25, 'image_o':25, 'uvo_video':81, \
-                    'burst':1,'bdd_det':10, 'bdd_inst':8,'bdd_track_seg':8, 'bdd_track_box':8, 'paco': 531, 'partimagenet': 40, \
+                    'burst':1,'bdd_det':10, 'bdd_inst':8,'bdd_track_seg':8, 'bdd_track_box':8, 'paco': 531, 'partimagenet': 40, 'part_classification': 560, \
                     'coco_panoptic': 133, 'paco_object': 75, 'paco_part': 456, 'ade20k_object': 44, 'ade20k_part': 234, \
                     'pascalvoc_object': 20, 'pascalvoc_part': 116, 'sa1b_joint_object': 1, 'sa1b_joint_part': 1, \
                     'pascal_joint_object': 20, 'pascal_joint_part': 93, 'partimagenet_joint_object': 11, 'partimagenet_joint_part': 40, 'diagram_joint_object': 11, 'diagram_joint_part': 560, 'partimagenet_semseg_object': 40, 'partimagenet_semseg_part': 147, \
@@ -200,6 +201,7 @@ DATASET_CATEGORY_SET = {
             'partimagenet_joint': set(list(range(51))),
             'partimagenet_renamed_joint': set(list(range(51))),
             'diagram_joint': set(list(range(571))),
+            'part_classification': set(list(range(560))),
             'pascal_open_vocabulary': set(list(range(89))),
             'pascal_open_vocabulary_val': set(list(range(107))),
             'coco_panoptic': set(list(range(133))),

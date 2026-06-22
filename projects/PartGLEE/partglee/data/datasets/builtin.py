@@ -44,6 +44,7 @@ from .register_ade20k_joint import register_all_ade20k_joint
 from .register_pascalvoc_joint import register_all_pascalvoc_joint
 from .register_partimagenet_joint import register_all_partimagenet_joint
 from .register_diagram_joint import register_all_diagram_joint
+from .register_diagram_part_classification import register_all_diagram_part_classification
 from .register_pascal_part_open_vocabulary import register_all_pascal_part_open_vocabulary
 from .visual_genome_joint import register_all_vg_joint
 from .register_ade_part_234 import register_ade20k_part_234
@@ -765,6 +766,9 @@ if __name__.endswith(".builtin"):
     
     # diagram-joint
     register_all_diagram_joint(_root)
+    
+    # diagram part classification
+    register_all_diagram_part_classification(_root)
     
     # pascal_part_open_vocabulary
     register_all_pascal_part_open_vocabulary(_root)

@@ -20,3 +20,4 @@ from .coco_panoptic_new_baseline_dataset_mapper import COCOPanopticNewBaselineDa
 from .instance_evaluation import InstanceSegEvaluator
 from .seginw_dataset_mapper import SeginWDatasetMapper
 from .joint_image_dataset_all_mapper import Joint_Image_allDatasetMapper
+from .part_classification_mapper import PartClassificationDatasetMapper
