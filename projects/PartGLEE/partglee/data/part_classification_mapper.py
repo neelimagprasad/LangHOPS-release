@@ -56,7 +56,9 @@ class PartClassificationDatasetMapper:
         dataset_dict = copy.deepcopy(dataset_dict)
 
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
-        utils.check_image_size(dataset_dict, image)
+        # Exp2 registration uses placeholder dimensions for speed; cropped part
+        # images have varied real sizes, so update the record from the image.
+        dataset_dict["height"], dataset_dict["width"] = image.shape[:2]
 
         aug_input = T.AugInput(image)
         self.augmentations(aug_input)

@@ -54,6 +54,17 @@ def _get_part_label(record):
 
 
 def _load_part_classification_dicts(json_file, labels_file, split):
+    if not os.path.exists(json_file):
+        raise FileNotFoundError(
+            f"Missing Exp2 part classification JSON: {json_file}. "
+            "Copy diagram_parts_v3_exp2.json into DETECTRON2_DATASETS/diagram/."
+        )
+    if not os.path.exists(labels_file):
+        raise FileNotFoundError(
+            f"Missing Exp1 canonical labels file: {labels_file}. "
+            "Copy diagram-labels-v3-standard.txt into DETECTRON2_DATASETS/diagram/."
+        )
+
     canonical_parts, part_to_super = _load_canonical_parts(labels_file)
     data = _load_json(json_file, [])
     if not canonical_parts:
